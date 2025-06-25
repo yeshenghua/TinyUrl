@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    platform: linux/arm64       # 苹果芯片建议加
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tinyurl
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: redis:7.2
+    platform: linux/arm64
+    ports:
+      - "6379:6379"

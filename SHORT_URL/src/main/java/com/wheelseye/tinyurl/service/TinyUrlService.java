@@ -1,5 +1,7 @@
 package com.wheelseye.tinyurl.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
+
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.wheelseye.tinyurl.entities.TinyLongMapping;
 import com.wheelseye.tinyurl.repo.TinyLongMappingRepository;
-
 //Task 4: Caching layer can be introduced for higher read throughput 
 
 
@@ -92,33 +93,54 @@ public class TinyUrlService {
 	
 	
 	//service for POST Request
+	/**
+	 * 把长链变成 6 位随机码（Snowflake 之后再替换成真正的唯一 ID）
+	 */
 	public String retrieve(String longUrl) {
-		//url must start from http,https
-		UrlValidator urlvalidator=new UrlValidator(new String[] {"http","https"}); 
-		//checking if URL is valid or not
-		if(urlvalidator.isValid(longUrl)) 
-		{
-			String tiny=getTinyUrl(longUrl);
-			try
-			{
-				String lookup=tinylongmappingrepository.findBytinyURL(tiny).getLongURL();  //if longUrl already present in DB then return tiny for it
-				
-				return ("Already Exists! \n https://dushyant.com/"+tiny);
-				
-			}
-			catch(NullPointerException e)
-			{
-				TinyLongMapping tinylongmapping = new TinyLongMapping();
-				tinylongmapping.setLongURL(longUrl);
-				tinylongmapping.setTinyURL(tiny);	
-				tinylongmappingrepository.save(tinylongmapping);
-				return ("https://dushyant.com/"+tiny);
-			}
-		}
-		else
-		{
-			return "URL must be valid!";
-		}
+		// ① 先做合法性校验（可留空）
+		// UrlValidator urlValidator = new UrlValidator(new String[]{"http","https"});
+		// if (!urlValidator.isValid(longUrl)) { return "URL invalid"; }
+
+		// ② 生成一个 6 位随机短码
+		String shortCode = RandomStringUtils.random(6, true, true); // apache-commons-lang3
+
+		// ② 保存映射（省略异常处理与去重逻辑，仅示范）
+		TinyLongMapping entity = new TinyLongMapping();
+		entity.setLongURL(longUrl);
+		entity.setTinyURL(shortCode);
+		tinylongmappingrepository.save(entity);
+
+		// ③ TODO: 先写入 DB / Redis（后面再补）
+		// ...
+
+		// ④ 只返回 “短码” 本身
+		return shortCode;
+//		//url must start from http,https
+//		UrlValidator urlvalidator=new UrlValidator(new String[] {"http","https"});
+//		//checking if URL is valid or not
+//		if(urlvalidator.isValid(longUrl))
+//		{
+//			String tiny=getTinyUrl(longUrl);
+//			try
+//			{
+//				String lookup=tinylongmappingrepository.findBytinyURL(tiny).getLongURL();  //if longUrl already present in DB then return tiny for it
+//
+//				return ("Already Exists! \n https://dushyant.com/"+tiny);
+//
+//			}
+//			catch(NullPointerException e)
+//			{
+//				TinyLongMappTing tinylongmapping = new TinyLongMapping();
+//				tinylongmapping.setLongURL(longUrl);
+//				tinylongmapping.setTinyURL(tiny);
+//				tinylongmappingrepository.save(tinylongmapping);
+//				return ("https://dushyant.com/"+tiny);
+//			}
+//		}
+//		else
+//		{
+//			return "URL must be valid!";
+//		}
 	}
 	
 	//conversion of Long to Base62	
